@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="집회계획표">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="format-detection" content="telephone=no">
+<title>경주동부 집회 임명표</title>
+<link id="pwaManifest" rel="manifest">
+<link id="pwaIcon" rel="apple-touch-icon">
+<style>
+/* ── 폰트: 오프라인도 동작하는 시스템폰트 우선 ── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+:root{
+  --navy:#1a3a5c;--navy2:#2a5080;--navy3:#3a6a9a;
+  --gold:#c8a040;--gold2:#e8c060;--gold-bg:#fdf8ed;
+  --bg:#f5f2ec;--surface:#fff;--surface2:#faf8f4;
+  --border:#e0d8cc;--text:#1a1510;--text2:#5a4a38;--text3:#9a8a78;
+  --radius:12px;--shadow:0 4px 20px rgba(20,12,4,.10);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --serif:'Noto Serif KR','나눔명조','맑은 고딕',serif;
+  --sans:'Noto Sans KR','나눔고딕','맑은 고딕',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+button,input,select{touch-action:manipulation;font-family:inherit}
+
+/* ── 브라우저 열기 안내 배너 ── */
+#browserBanner{display:none;position:fixed;inset:0;z-index:9999;background:#1a3a5c;color:#fff;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;gap:16px}
+#browserBanner h2{font-family:var(--serif);font-size:20px;font-weight:900;line-height:1.4}
+#browserBanner p{font-size:14px;opacity:.8;line-height:1.7}
+#browserBanner .bb-btn{background:var(--gold2);color:#1a0a00;border:none;border-radius:10px;padding:14px 28px;font-size:16px;font-weight:700;cursor:pointer;font-family:var(--serif)}
+#browserBanner .bb-skip{background:transparent;border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer}
+
+/* ── HEADER ── */
+.app-hdr{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,var(--navy3) 100%);color:#fff;padding:calc(12px + var(--safe-top)) 12px 0;position:sticky;top:0;z-index:200;box-shadow:0 4px 20px rgba(10,20,40,.28)}
+.hdr-inner{max-width:900px;margin:0 auto}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.hdr-title{font-family:var(--serif);font-size:14px;font-weight:900;letter-spacing:-.3px;display:flex;align-items:center;gap:6px;flex:1}
+.hdr-gold{color:var(--gold2)}
+.hdr-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.hdr-btn{padding:6px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.hdr-btn.btn-gold{background:var(--gold);border-color:var(--gold2);color:#1a0a00}
+
+/* ── 주 탭 ── */
+.week-tabs-wrap{border-top:1px solid rgba(255,255,255,.12);display:flex;align-items:stretch;flex-direction:column}
+.year-label{display:none;align-items:center;padding:0 12px;font-size:16px;font-weight:900;color:#fff;white-space:nowrap;border-right:1px solid rgba(255,255,255,.2);flex-shrink:0;font-family:var(--serif)}
+.year-label.visible{display:flex}
+/* 월 탭 행 */
+.month-tabs-row{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.08)}
+.month-tab{padding:7px 14px;font-size:13px;font-weight:700;color:rgba(255,255,255,.5);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;font-family:var(--serif);background:none;border-top:none;border-left:none;border-right:none;flex-shrink:0;letter-spacing:-.2px}
+.month-tab.on{color:#fff;border-bottom-color:var(--gold2)}
+.month-tab.has-data{color:rgba(255,255,255,.75)}
+/* 주 탭 행 */
+.week-tabs{flex:1;display:flex;overflow-x:auto;scrollbar-width:none;padding-bottom:0;-webkit-overflow-scrolling:touch}
+.week-tabs::-webkit-scrollbar{display:none}
+.week-tab{padding:9px 12px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none;flex-shrink:0}
+.week-tab.on{color:#fff;border-bottom-color:var(--gold2)}
+.week-tab.today{color:var(--gold2)}
+.today-dot{display:inline-block;width:5px;height:5px;background:var(--gold2);border-radius:50%;margin-left:3px;vertical-align:middle;position:relative;top:-1px}
+
+/* ── 툴바 ── */
+.toolbar{background:#fff;border-bottom:1px solid var(--border);padding:8px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.toolbar-inner{max-width:900px;margin:0 auto;width:100%;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tbtn{padding:7px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.tbtn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tbtn.danger{background:#fdeaea;color:#9a2020;border-color:#f0c0c0}
+.save-badge{font-size:11px;padding:4px 10px;border-radius:50px;font-weight:600;margin-left:auto;white-space:nowrap}
+.save-ok{background:#e4f0e8;color:#2a6e3a}
+.save-no{background:#f4f0e8;color:#9a7a28}
+.save-err{background:#fdeaea;color:#9a2020}
+
+/* ── FAB 저장 버튼 (세로모드 전용) ── */
+.fab-save{display:none;position:fixed;bottom:calc(20px + var(--safe-bot));right:16px;width:54px;height:54px;border-radius:50%;background:var(--navy);color:#fff;font-size:22px;border:none;box-shadow:0 4px 18px rgba(10,20,60,.38);z-index:300;cursor:pointer;align-items:center;justify-content:center}
+
+/* ── MAIN ── */
+.main{max-width:900px;margin:0 auto;padding:12px 10px calc(28px + var(--safe-bot))}
+
+/* ── 주 카드 ── */
+.week-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border)}
+.week-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:16px 16px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.wh-left{flex:1;min-width:0}
+.wh-week{display:flex;align-items:center;margin-bottom:4px;position:relative;min-height:26px}
+.wh-week-label{font-family:var(--serif);font-size:17px;font-weight:700;position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
+.wh-reading{font-size:11px;opacity:.7;font-weight:400;margin-top:2px}
+.wh-chair{font-family:var(--serif);font-size:20px;font-weight:700;color:#fff;display:flex;align-items:baseline;gap:6px;margin-top:8px}
+.wh-chair-lbl{font-family:var(--sans);font-size:11px;font-weight:500;opacity:.6}
+.wh-edit{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:7px;padding:5px 10px;color:#fff;font-size:11px;cursor:pointer;font-weight:600;flex-shrink:0}
+
+/* ── 섹션 헤더 ── */
+.section-divider{margin:4px 0 0}
+.sect-label{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;font-family:var(--serif);font-size:12px;font-weight:700;letter-spacing:-.2px;white-space:nowrap}
+.sect-jewel{background:linear-gradient(90deg,#b87800,#d49010,#f0b828);color:#fff}
+.sect-service{background:linear-gradient(90deg,#0d5e24,#1e8038,#2da050);color:#fff}
+.sect-life{background:linear-gradient(90deg,#2e1280,#4e30a8,#6848c0);color:#fff}
+
+/* ── 노래 행 ── */
+.song-row{padding:7px 14px;display:flex;align-items:center;gap:8px;background:var(--gold-bg);border-top:1px solid #ede0b8;border-bottom:1px solid #ede0b8}
+.song-icon{font-size:15px}
+.song-lbl{font-size:10px;font-weight:700;color:#a07020;min-width:76px;letter-spacing:-.2px}
+.song-text{font-size:12px;font-weight:600;color:#7a5010}
+.prayer-text{font-size:11px;color:#9a7a30;margin-left:auto}
+.song-row-editable{cursor:pointer;position:relative}
+.song-edit-inline-btn{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--navy);color:#fff;border:none;border-radius:5px;padding:3px 7px;font-size:10px;cursor:pointer;font-weight:600}
+.song-row-editable:active .song-edit-inline-btn,
+.song-row-editable:hover .song-edit-inline-btn{display:block}
+.song-edit-form{padding:10px 14px;background:#f4f0ff;border-top:1px solid #dbd5f0;border-bottom:1px solid #dbd5f0}
+
+/* ── 항목 ── */
+.schedule-items{padding:0 6px 6px}
+.sched-item{display:flex;align-items:stretch;border-radius:8px;margin:3px 0;overflow:hidden;border:1px solid transparent;position:relative}
+.sched-item:active{border-color:var(--border);background:#faf8f4}
+.sched-item.editing{border-color:var(--navy2)}
+.type-bar{width:4px;flex-shrink:0}
+.tb-jewel{background:linear-gradient(180deg,#e8c030,#c8a020)}
+.tb-service{background:linear-gradient(180deg,#3a9048,#2e6e3a)}
+.tb-life{background:linear-gradient(180deg,#6a5aaa,#4a3a8a)}
+.item-body{flex:1;padding:8px 10px;display:flex;align-items:flex-start;gap:6px}
+.item-num{font-size:10px;font-weight:700;color:var(--text3);min-width:16px;padding-top:2px}
+.item-content{flex:1;min-width:0}
+.item-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.35}
+.item-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.item-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;padding:4px 0}
+.item-who{font-size:11px;font-weight:600;color:var(--navy2);text-align:right;max-width:80px;word-break:keep-all}
+.item-min{font-size:9px;font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:50px;padding:1px 6px;color:var(--text3)}
+/* 타입 토글 */
+.type-toggle{display:flex;gap:2px;margin-top:3px}
+.tt-btn{width:20px;height:20px;border-radius:4px;border:1.5px solid var(--border);background:#f5f2ec;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;opacity:.3;padding:0}
+.tt-btn:active{opacity:.9}
+.tt-on-jewel{opacity:1!important;background:#fdf0c0;border-color:#d4a020}
+.tt-on-service{opacity:1!important;background:#e0f4e4;border-color:#2a8040}
+.tt-on-life{opacity:1!important;background:#ece8f8;border-color:#5a3aaa}
+/* 편집 버튼 - 항목 터치시 표시 */
+.item-edit-btn{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--navy);color:#fff;border:none;border-radius:5px;padding:3px 7px;font-size:10px;cursor:pointer;font-weight:600}
+.sched-item:active .item-edit-btn,
+.sched-item.editing .item-edit-btn{display:block}
+
+/* ── 닫는 블록 ── */
+.closing-block{border-top:1px dashed var(--border);padding:2px 0 6px}
+.closing-line{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid #f0ede8;font-size:12px;position:relative}
+.closing-line:last-child{border-bottom:none}
+.closing-line .closing-lbl{font-size:10px;font-weight:700;color:var(--text3);min-width:38px}
+.closing-line .closing-val{font-weight:600;color:var(--text)}
+.closing-song-prayer{cursor:pointer}
+.closing-prayer-val{font-weight:600;color:var(--navy2);margin-left:auto;font-size:12px}
+.closing-edit-btn{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--navy);color:#fff;border:none;border-radius:5px;padding:3px 7px;font-size:10px;cursor:pointer;font-weight:600}
+.closing-song-prayer:active .closing-edit-btn{display:block}
+.closing-edit-form{padding:10px 14px;background:#f4f0ff;border-top:1px solid #dbd5f0}
+
+/* ── 인라인 편집 폼 ── */
+.edit-form{background:#f4f0ff;border-top:1px solid #dbd5f0;padding:12px 14px;display:none}
+.edit-form.on{display:block}
+.ef-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ef-full{grid-column:1/-1}
+.ef-lbl{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:3px}
+.ef-inp{width:100%;padding:8px 10px;border:1.5px solid #ccc;border-radius:7px;font-size:14px;background:#fff;color:var(--text);outline:none;-webkit-appearance:none}
+.ef-inp:focus{border-color:var(--navy2)}
+.ef-acts{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
+.ef-btn{padding:8px 14px;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer}
+.ef-cancel{background:#eee;color:var(--text2)}
+.ef-save{background:var(--navy);color:#fff}
+
+/* ── 모달 ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:500;align-items:flex-end;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px calc(24px + var(--safe-bot));width:100%;max-width:540px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .22s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.m-handle{width:34px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 14px}
+.m-title{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.m-lbl{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:700}
+.m-fi{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;background:var(--surface2);outline:none;color:var(--text);margin-bottom:10px;-webkit-appearance:none}
+.m-fi:focus{border-color:var(--navy2)}
+.m-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.m-row .m-fi{margin-bottom:0}
+.m-acts{display:flex;gap:8px;margin-top:4px}
+.m-cancel{padding:11px 16px;background:#eee;color:var(--text2);border:none;border-radius:8px;font-size:14px;cursor:pointer}
+.m-save{flex:1;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+
+/* ── 주 추가 버튼 ── */
+.add-week-wrap{padding:16px 0;text-align:center}
+.add-week-btn{padding:10px 22px;border:2px dashed var(--border);border-radius:10px;background:none;font-family:var(--serif);font-size:13px;color:var(--text3);cursor:pointer}
+
+/* ── 토스트 ── */
+.toast{position:fixed;bottom:calc(80px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(10px);background:#1a1510dd;color:#fff;padding:9px 18px;border-radius:50px;font-size:13px;z-index:999;pointer-events:none;opacity:0;transition:.2s;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ── 인쇄 ── */
+.print-title{display:none}
+@media print{
+  @page{size:A4 portrait;margin:15mm 12mm}
+  .app-hdr,.toolbar,.item-edit-btn,.add-week-wrap,.modal-bg,.toast,.tbtn,.wh-edit,.fab-save,.type-toggle{display:none!important}
+  body{background:#fff!important}
+  .main{padding:0;max-width:100%}
+  .week-card{box-shadow:none!important;border:1.5px solid #bbb!important;break-inside:avoid;margin-bottom:12px}
+  .week-header{background:#1a3a5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sect-jewel,.sect-service,.sect-life,.type-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .song-row{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-title{display:block!important;text-align:center;font-family:var(--serif);font-size:16pt;font-weight:900;color:#1a3a5c;margin-bottom:14px;padding-bottom:8px;border-bottom:2.5px solid #1a3a5c}
+}
+
+/* ── 세로 모드 (480px 이하) ── */
+@media(max-width:480px){
+  .fab-save{display:flex}
+  .toolbar{display:none}
+  .hdr-title{font-size:12px}
+  .month-tab{padding:6px 12px;font-size:12px}
+  .week-tab{padding:7px 10px;font-size:11px}
+  .hdr-btn{padding:5px 8px;font-size:10px}
+  .year-label{font-size:14px;padding:0 10px}
+  .week-tab{padding:8px 10px;font-size:11px}
+  .wh-week-label{font-size:15px}
+  .wh-chair{font-size:18px}
+  .wh-reading{font-size:10px}
+  .week-header{padding:14px 12px 12px}
+  .sect-label{font-size:11px;padding:7px 12px}
+  .item-body{padding:7px 8px}
+  .item-title{font-size:12px}
+  .item-who{font-size:10px;max-width:68px}
+  .main{padding:8px 6px calc(80px + var(--safe-bot))}
+  .song-row{padding:6px 12px}
+  .song-text{font-size:11px}
+  .prayer-text{font-size:10px}
+  .closing-line{padding:5px 12px;font-size:11px}
+  .modal{padding:16px 12px calc(22px + var(--safe-bot))}
+  .m-fi{font-size:16px}/* iOS zoom 방지 */
+  .ef-inp{font-size:16px}/* iOS zoom 방지 */
+}
+</style>
+</head>
+<body>
+
+<!-- 브라우저 열기 안내 -->
+<div id="browserBanner">
+  <div style="font-size:48px">📱</div>
+  <h2>삼성 인터넷 또는<br>크롬으로 열어주세요</h2>
+  <p>내 파일 앱에서는 편집·저장 기능이<br>제한됩니다.<br><br>이 파일을 <strong>삼성 인터넷</strong> 또는<br><strong>Chrome 브라우저</strong>로 열면<br>모든 기능을 사용할 수 있어요.</p>
+  <button class="bb-btn" onclick="document.getElementById('browserBanner').style.display='none'">계속 보기 (기능 제한)</button>
+</div>
+
+<!-- HEADER -->
+<header class="app-hdr">
+  <div class="hdr-inner">
+    <div class="hdr-top">
+      <div class="hdr-title">
+        <span class="hdr-gold">✦</span>
+        경주 동부 회중 평일 집회 계획표
+      </div>
+      <div class="hdr-actions">
+        <button class="hdr-btn btn-gold" onclick="addNewWeek()">＋</button>
+        <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadFromFile(event)">
+        <button class="hdr-btn" onclick="document.getElementById('loadFile').click()">📂</button>
+        <button class="hdr-btn" onclick="saveToFile()">💾</button>
+        <button class="hdr-btn" onclick="doPrint()">🖨</button>
+      </div>
+    </div>
+    <div class="week-tabs-wrap">
+      <div class="month-tabs-row">
+        <div id="yearLabel" class="year-label"></div>
+        <div class="week-tabs" id="monthTabs" style="justify-content:flex-start"></div>
+      </div>
+      <div class="week-tabs" id="weekTabs"></div>
+    </div>
+  </div>
+</header>
+
+<!-- TOOLBAR (데스크탑/가로모드) -->
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <button class="tbtn primary" onclick="saveLocal()">💾 저장</button>
+    <button class="tbtn" onclick="addNewWeek()">＋ 주 추가</button>
+    <button class="tbtn danger" onclick="deleteCurrentWeek()">이번 주 삭제</button>
+    <span class="save-badge save-no" id="saveBadge">미저장</span>
+  </div>
+</div>
+
+<!-- FAB 저장 (세로모드) -->
+<button class="fab-save" id="fabSave" onclick="saveLocal()">💾</button>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+  <div class="print-title">경주 동부 회중 — 집회 임명표</div>
+</div>
+
+<!-- 헤더 편집 모달 -->
+<div class="modal-bg" id="headerModal">
+  <div class="modal" id="modalSheet">
+    <div class="m-handle"></div>
+    <div class="m-title">📋 집회 정보 편집</div>
+    <div class="m-row">
+      <div><div class="m-lbl">시작 날짜</div><input class="m-fi" id="mStartDate" type="date"></div>
+      <div><div class="m-lbl">주 표시</div><input class="m-fi" id="mWeek" placeholder="3월 2-8일"></div>
+    </div>
+    <div class="m-lbl">성경 읽기</div>
+    <input class="m-fi" id="mReading" placeholder="이사야 41-42장">
+    <div class="m-row">
+      <div><div class="m-lbl">사회자</div><input class="m-fi" id="mChair" placeholder="이름"></div>
+      <div><div class="m-lbl">기도</div><input class="m-fi" id="mPrayerOpen" placeholder="이름"></div>
+    </div>
+    <div class="m-row">
+      <div><div class="m-lbl">시작 노래</div><input class="m-fi" id="mSong1" placeholder="번호" inputmode="numeric"></div>
+      <div><div class="m-lbl">그리스도인 생활 노래</div><input class="m-fi" id="mSong2" placeholder="번호" inputmode="numeric"></div>
+    </div>
+    <div class="m-row">
+      <div><div class="m-lbl">마치는 노래</div><input class="m-fi" id="mSong3" placeholder="번호" inputmode="numeric"></div>
+      <div><div class="m-lbl">기도</div><input class="m-fi" id="mPrayerClose" placeholder="이름"></div>
+    </div>
+    <div class="m-acts">
+      <button class="m-cancel" onclick="closeHeaderModal()">취소</button>
+      <button class="m-save" onclick="saveHeaderModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ── 삼성 내 파일 앱 감지 ──
+(function(){
+  const ua = navigator.userAgent || '';
+  // 내 파일 앱은 file:// + MyFiles / FileManager 패턴
+  const isFileApp = location.protocol === 'file:' &&
+    (ua.indexOf('SamsungBrowser') === -1 && ua.indexOf('Chrome') === -1 && ua.indexOf('Firefox') === -1);
+  if(isFileApp){
+    document.getElementById('browserBanner').style.display = 'flex';
+  }
+})();
+
+const SK = 'jiboe_v6';
+let D = [], curWeek = 0, editingHeaderIdx = -1, editingItemKey = null;
+
+// ── 날짜 유틸 ──
+function weekLabel(s){
+  const d=new Date(s+'T00:00:00'), e=new Date(d); e.setDate(e.getDate()+6);
+  const sm=d.getMonth()+1,sd=d.getDate(),em=e.getMonth()+1,ed=e.getDate();
+  return sm===em?`${sm}월 ${sd}-${ed}일`:`${sm}월 ${sd}일-${em}월 ${ed}일`;
+}
+function weekYear(s){ return new Date(s+'T00:00:00').getFullYear(); }
+function thisWeekMonday(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const dw=t.getDay(); t.setDate(t.getDate()+(dw===0?-6:1-dw));
+  return t.toISOString().slice(0,10);
+}
+function nextWeekISO(){
+  if(!D.length) return thisWeekMonday();
+  const last=D[D.length-1].startDate;
+  if(!last) return thisWeekMonday();
+  const d=new Date(last+'T00:00:00'); d.setDate(d.getDate()+7);
+  return d.toISOString().slice(0,10);
+}
+function findTodayWeek(){
+  const today=new Date().toISOString().slice(0,10);
+  for(let i=0;i<D.length;i++){
+    const s=D[i].startDate; if(!s) continue;
+    const e=new Date(s+'T00:00:00'); e.setDate(e.getDate()+6);
+    if(today>=s && today<=e.toISOString().slice(0,10)) return i;
+  }
+  for(let i=0;i<D.length;i++){ if(D[i].startDate>=today) return i; }
+  return D.length-1;
+}
+function backfillDates(){
+  const fi=D.findIndex(w=>w.startDate);
+  if(fi>=0){
+    const fd=new Date(D[fi].startDate+'T00:00:00');
+    for(let i=fi-1;i>=0;i--){ fd.setDate(fd.getDate()-7); D[i].startDate=fd.toISOString().slice(0,10); }
+    const fd2=new Date(D[fi].startDate+'T00:00:00');
+    for(let i=fi+1;i<D.length;i++){ fd2.setDate(fd2.getDate()+7); if(!D[i].startDate) D[i].startDate=fd2.toISOString().slice(0,10); }
+  } else {
+    let d=new Date(thisWeekMonday()+'T00:00:00');
+    D.forEach(w=>{ w.startDate=d.toISOString().slice(0,10); d.setDate(d.getDate()+7); });
+  }
+  D.forEach(w=>{ if(!w.week||w.week==='새 주 (편집 필요)') w.week=weekLabel(w.startDate); });
+}
+
+// ── 기본 데이터 ──
+const DEFAULT_DATA=[
+  {week:'3월 2-8일',startDate:'2026-03-02',reading:'이사야 41-42장',
+   chair:'손태성',song1:'8',prayerOpen:'윤정우',song2:'19',song3:'110',prayerClose:'오덕화',
+   items:[
+    {no:1,type:'jewel',title:'성경에 담긴 보물',sub:'두려워하지 마라',min:10,who:'박동혁'},
+    {no:2,type:'jewel',title:'영적 보물 찾기',sub:'',min:10,who:'백문호'},
+    {no:3,type:'jewel',title:'성경 낭독',sub:'',min:4,who:'이희수'},
+    {no:4,type:'service',title:'대화 시작하기',sub:'호별 방문',min:3,who:'전수민/민영조'},
+    {no:5,type:'service',title:'대화 시작하기',sub:'비공식 증거',min:4,who:'최나연/오가은'},
+    {no:6,type:'service',title:'우리의 신앙 설명하기',sub:'연설',min:5,who:'강미정/성인숙'},
+    {no:7,type:'life',title:'3월 7일 토요일에 시작될 기념식 특별 활동',sub:'',min:5,who:'강대정'},
+    {no:8,type:'life',title:'조직이 이루고 있는 일들 토의',sub:'동영상',min:10,who:''},
+    {no:9,type:'life',title:'회중 성서 연구',sub:'',min:30,who:'이학만/차규호'},
+  ]},
+  {week:'3월 9-15일',startDate:'2026-03-09',reading:'이사야 43-44장',
+   chair:'이승구',song1:'63',prayerOpen:'이학만',song2:'69',song3:'',prayerClose:'',
+   items:[
+    {no:1,type:'jewel',title:'200년 앞서 기록된 예언',sub:'',min:10,who:''},
+    {no:2,type:'jewel',title:'영적 보물 찾기',sub:'',min:10,who:'강대정'},
+    {no:3,type:'jewel',title:'성경 낭독',sub:'',min:4,who:'이동건'},
+    {no:4,type:'service',title:'대화 시작하기',sub:'호별 방문',min:1,who:'김옥주/신정숙'},
+    {no:5,type:'service',title:'대화 시작하기',sub:'비공식 증거',min:3,who:'안영주/류주연'},
+    {no:6,type:'service',title:'대화 시작하기',sub:'비공식 증거',min:3,who:'강귀염/최미화'},
+    {no:7,type:'service',title:'관심이 자라도록 돕기',sub:'호별 방문',min:4,who:'손희진/최민정'},
+    {no:8,type:'life',title:'회중의 필요 — 건축의 종과 자원봉사자를 기억하십시오',sub:'동영상',min:10,who:'오덕화'},
+    {no:9,type:'life',title:'회중 성서 연구',sub:'1부 소개 및 68-69장',min:30,who:'박승동/오민현'},
+  ]},
+  ...['3월 16-22일','3월 23-29일','3월 30일-4월 5일'].map((week,i)=>({
+    week,startDate:['2026-03-16','2026-03-23','2026-03-30'][i],reading:['이사야 45-46장','이사야 47-48장','이사야 49-50장'][i],
+    chair:'',song1:'',prayerOpen:'',song2:'',song3:'',prayerClose:'',
+    items:[
+      {no:1,type:'jewel',title:'성경에 담긴 보물',sub:'',min:10,who:''},
+      {no:2,type:'jewel',title:'영적 보물 찾기',sub:'',min:10,who:''},
+      {no:3,type:'jewel',title:'성경 낭독',sub:'',min:4,who:''},
+      {no:4,type:'service',title:'대화 시작하기',sub:'호별 방문',min:3,who:''},
+      {no:5,type:'service',title:'대화 시작하기',sub:'비공식 증거',min:4,who:''},
+      {no:6,type:'service',title:'우리의 신앙 설명하기',sub:'연설',min:5,who:''},
+      {no:7,type:'life',title:'회중의 필요',sub:'',min:10,who:''},
+      {no:8,type:'life',title:'회중 성서 연구',sub:'',min:30,who:''},
+    ]
+  }))
+];
+
+// ── 저장/불러오기 ──
+let _lsOk=false;
+try{ localStorage.setItem('_t','1'); localStorage.removeItem('_t'); _lsOk=true; }catch(e){}
+
+function saveLocal(){
+  if(_lsOk){
+    try{
+      localStorage.setItem(SK,JSON.stringify({data:D,curWeek,savedAt:new Date().toISOString()}));
+      const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      setSaveBadge('ok','✓ '+t+' 저장됨');
+      toast('✅ 저장됐어요');
+      return;
+    }catch(e){}
+  }
+  // localStorage 불가 → HTML 파일 자체에 데이터 삽입 다운로드
+  saveAsHtmlFile();
+}
+
+function loadLocal(){
+  if(_lsOk){
+    const raw=localStorage.getItem(SK);
+    if(raw){ try{ const p=JSON.parse(raw); D=p.data; curWeek=p.curWeek||0; return true; }catch{} }
+  }
+  // HTML 내장 데이터
+  const el=document.getElementById('_sd');
+  if(el&&el.textContent.trim()){
+    try{ const p=JSON.parse(el.textContent); D=p.data; curWeek=p.curWeek||0; return true; }catch{}
+  }
+  return false;
+}
+
+function saveAsHtmlFile(){
+  const payload=JSON.stringify({data:D,curWeek,savedAt:new Date().toISOString()});
+  let html=document.documentElement.outerHTML;
+  html=html.replace(/<script id="_sd" type="application\/json">[\s\S]*?<\/script>/,
+    `<script id="_sd" type="application/json">${payload}<\/script>`);
+  try{
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='경주동부_집회임명표.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },1500);
+    setSaveBadge('ok','✓ HTML 파일 저장');
+    toast('✅ 파일로 저장됐어요\n다운로드 폴더에서 열어주세요');
+  }catch(e){ setSaveBadge('err','⚠ 저장 실패'); toast('⚠ 저장 실패: '+e.message); }
+}
+
+function saveToFile(){
+  if(!_lsOk){ saveAsHtmlFile(); return; }
+  const payload={data:D,savedAt:new Date().toLocaleString('ko-KR'),version:'4.0'};
+  try{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+    a.download=`경주동부_집회임명표_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },1500);
+    toast('💾 JSON 내보내기 완료');
+  }catch(e){ toast('⚠ 내보내기 실패'); }
+}
+
+function loadFromFile(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const p=JSON.parse(ev.target.result);
+      if(!confirm((p.savedAt||'?')+' 데이터로 불러올까요?')) return;
+      D=p.data; curWeek=0; saveLocal(); renderAll(); toast('✅ 불러오기 완료');
+    }catch{ toast('⚠ 파일을 읽을 수 없어요'); }
+  };
+  r.readAsText(file); e.target.value='';
+}
+function setSaveBadge(t,m){ const el=document.getElementById('saveBadge'); el.className='save-badge save-'+t; el.textContent=m; }
+
+// ── 렌더 ──
+function renderAll(){ renderTabs(); renderWeekCard(); }
+
+// 현재 선택된 월 (M=1~12)
+let curMonth = null;
+
+function renderTabs(){
+  const today=new Date().toISOString().slice(0,10);
+
+  // ── 연도 표시 ──
+  const yl=document.getElementById('yearLabel');
+  const cy=D[curWeek]&&D[curWeek].startDate?weekYear(D[curWeek].startDate):null;
+  if(cy){ yl.textContent=cy+'년'; yl.classList.add('visible'); } else { yl.classList.remove('visible'); }
+
+  // ── 연도 결정: 데이터의 첫 startDate 기준 ──
+  const baseYear = (()=>{
+    const w=D.find(x=>x.startDate);
+    return w ? new Date(w.startDate+'T00:00:00').getFullYear() : new Date().getFullYear();
+  })();
+
+  // curMonth 초기화: curWeek의 월
+  if(curMonth===null && D[curWeek]&&D[curWeek].startDate){
+    const d=new Date(D[curWeek].startDate+'T00:00:00');
+    curMonth={year:d.getFullYear(),month:d.getMonth()+1};
+  }
+  if(curMonth===null) curMonth={year:baseYear,month:new Date().getMonth()+1};
+
+  // ── 1~12월 고정 표시 ──
+  const mt=document.getElementById('monthTabs');
+  mt.innerHTML=Array.from({length:12},(_,i)=>i+1).map(m=>{
+    const isOn=curMonth&&curMonth.year===baseYear&&curMonth.month===m;
+    // 해당 월에 데이터가 있는지 표시
+    const hasData=D.some(w=>{
+      if(!w.startDate) return false;
+      const d=new Date(w.startDate+'T00:00:00');
+      return d.getFullYear()===baseYear && d.getMonth()+1===m;
+    });
+    return `<button class="month-tab ${isOn?'on':''} ${hasData?'has-data':''}" onclick="switchMonth(${baseYear},${m})">${m}월</button>`;
+  }).join('');
+
+  // 선택 월 탭 스크롤
+  setTimeout(()=>{
+    const on=mt.querySelector('.month-tab.on');
+    if(on) on.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  },50);
+
+  // ── 선택된 월의 주만 표시 ──
+  const wt=document.getElementById('weekTabs');
+  const monthWeeks=D.map((w,i)=>({w,i})).filter(({w})=>{
+    if(!w.startDate) return false;
+    const d=new Date(w.startDate+'T00:00:00');
+    return curMonth && d.getFullYear()===curMonth.year && d.getMonth()+1===curMonth.month;
+  });
+  if(monthWeeks.length===0){
+    wt.innerHTML=`<span style="color:rgba(255,255,255,.4);font-size:12px;padding:10px 14px;align-self:center">${curMonth?curMonth.month+'월':''}에 등록된 주가 없어요 — ＋ 주 추가로 등록하세요</span>`;
+  } else {
+    wt.innerHTML=monthWeeks.map(({w,i})=>{
+      const d=new Date(w.startDate+'T00:00:00');
+      const e=new Date(d); e.setDate(e.getDate()+6);
+      const isTd=(today>=w.startDate&&today<=e.toISOString().slice(0,10));
+      const sd=d.getDate(), ed=e.getDate(), em=e.getMonth()+1, wm=d.getMonth()+1;
+      const shortLabel=wm===em?`${sd}-${ed}일`:`${sd}일-${em}월${ed}일`;
+      return `<button class="week-tab ${i===curWeek?'on':''} ${isTd?'today':''}" onclick="switchWeek(${i})">${shortLabel}${isTd?'<span class="today-dot"></span>':''}</button>`;
+    }).join('');
+  }
+
+  // 선택 탭 스크롤
+  setTimeout(()=>{
+    const on=wt.querySelector('.week-tab.on');
+    if(on) on.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  },50);
+}
+
+function switchMonth(year,month){
+  curMonth={year,month};
+  // 해당 월의 첫 번째 주로 이동 (없으면 curWeek 유지)
+  const idx=D.findIndex(w=>{
+    if(!w.startDate) return false;
+    const d=new Date(w.startDate+'T00:00:00');
+    return d.getFullYear()===year && d.getMonth()+1===month;
+  });
+  if(idx>=0) curWeek=idx;
+  renderAll();
+}
+
+function switchWeek(idx){
+  curWeek=idx;
+  // 선택된 주의 월로 curMonth 동기화
+  if(D[idx]&&D[idx].startDate){
+    const d=new Date(D[idx].startDate+'T00:00:00');
+    curMonth={year:d.getFullYear(),month:d.getMonth()+1};
+  }
+  renderAll();
+}
+
+function typeClass(t){ return t==='jewel'?'jewel':t==='service'?'service':'life'; }
+function typeSectLabel(t){ return t==='jewel'?'💎 성경에 담긴 보물':t==='service'?'🌿 야외 봉사에 힘쓰십시오':'🏠 그리스도인 생활'; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderWeekCard(){
+  const mc=document.getElementById('mainContent');
+  const W=D[curWeek];
+  if(!W){ mc.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">주 데이터 없음</div>'; return; }
+
+  const sections=[]; let cur=null;
+  W.items.forEach((item,idx)=>{
+    if(!cur||cur.type!==item.type){ cur={type:item.type,items:[]}; sections.push(cur); }
+    cur.items.push({...item,_idx:idx});
+  });
+
+  const sectionsHTML=sections.map(sec=>{
+    const tc=typeClass(sec.type);
+    const items=sec.items.map(item=>{
+      const isEd=editingItemKey===`${curWeek}-${item._idx}`;
+      return `
+        <div class="sched-item ${isEd?'editing':''}" id="item-${curWeek}-${item._idx}" onclick="onItemTap(${curWeek},${item._idx},event)">
+          <div class="type-bar tb-${tc}"></div>
+          <div class="item-body">
+            <div class="item-num">${item.no}.</div>
+            <div class="item-content">
+              <div class="item-title">${esc(item.title)}</div>
+              ${item.sub?`<div class="item-sub">${esc(item.sub)}</div>`:''}
+            </div>
+            <div class="item-right">
+              <div class="item-who">${esc(item.who||'—')}</div>
+              <div class="item-min">${item.min}분</div>
+              <div class="type-toggle">
+                <button class="tt-btn ${item.type==='jewel'?'tt-on-jewel':''}" onclick="quickType(${curWeek},${item._idx},'jewel',event)">💎</button>
+                <button class="tt-btn ${item.type==='service'?'tt-on-service':''}" onclick="quickType(${curWeek},${item._idx},'service',event)">🌿</button>
+                <button class="tt-btn ${item.type==='life'?'tt-on-life':''}" onclick="quickType(${curWeek},${item._idx},'life',event)">🏠</button>
+              </div>
+            </div>
+          </div>
+          <button class="item-edit-btn" onclick="openItemEdit(${curWeek},${item._idx},event)">편집</button>
+          ${isEd?renderItemEditForm(curWeek,item._idx,item):''}
+        </div>`;
+    }).join('');
+
+    // 중간 노래 (life 섹션 앞)
+    const isEditSong2=editingItemKey===`${curWeek}-song2`;
+    const beforeItems = sec.type==='life' ? (isEditSong2?
+      `<div class="song-edit-form">
+        <div class="ef-lbl">그리스도인 생활 노래</div>
+        <input class="ef-inp" id="ef-song2" value="${esc(W.song2||'')}" placeholder="번호" inputmode="numeric" style="width:100px;margin-bottom:8px">
+        <div class="ef-acts"><button class="ef-btn ef-cancel" onclick="cancelItemEdit()">취소</button><button class="ef-btn ef-save" onclick="saveSong2Edit(${curWeek})">저장</button></div>
+      </div>`:
+      `<div class="song-row song-row-editable" onclick="editingItemKey='${curWeek}-song2';renderWeekCard()">
+        <span class="song-icon">🎵</span>
+        <span class="song-lbl">그리스도인 생활</span><span class="song-text">${W.song2?'노래 '+esc(W.song2):'—'}</span>
+        <button class="song-edit-inline-btn" onclick="editingItemKey='${curWeek}-song2';renderWeekCard();event.stopPropagation()">편집</button>
+      </div>`) : '';
+
+    // 맺음말+노래+기도 (life 섹션 뒤)
+    const isEditClosing=editingItemKey===`${curWeek}-closing`;
+    const afterItems = sec.type==='life' ? (isEditClosing?
+      `<div class="closing-edit-form">
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+          <div><div class="ef-lbl">마치는 노래</div><input class="ef-inp" id="ef-song3" value="${esc(W.song3||'')}" placeholder="번호" inputmode="numeric" style="width:90px"></div>
+          <div><div class="ef-lbl">마치는 기도</div><input class="ef-inp" id="ef-prayerClose" value="${esc(W.prayerClose||'')}" placeholder="이름"></div>
+        </div>
+        <div class="ef-acts" style="margin-top:8px"><button class="ef-btn ef-cancel" onclick="cancelItemEdit()">취소</button><button class="ef-btn ef-save" onclick="saveClosingEdit(${curWeek})">저장</button></div>
+      </div>`:
+      `<div class="closing-block">
+        <div class="closing-line"><span class="closing-lbl">맺음말</span><span class="closing-val">3분</span></div>
+        <div class="closing-line closing-song-prayer" onclick="openClosingEdit(${curWeek})">
+          <span class="closing-lbl" style="display:flex;align-items:center;gap:6px"><span class="song-icon">🎵</span>마치는 노래</span>
+          <span class="closing-val">${W.song3?'노래 '+esc(W.song3):'—'}</span>
+          <button class="closing-edit-btn" onclick="openClosingEdit(${curWeek});event.stopPropagation()">편집</button>
+        </div>
+        <div class="closing-line closing-song-prayer" onclick="openClosingEdit(${curWeek})">
+          <span class="closing-lbl">기도</span>
+          <span class="closing-val">${esc(W.prayerClose||'—')}</span>
+          <button class="closing-edit-btn" onclick="openClosingEdit(${curWeek});event.stopPropagation()">편집</button>
+        </div>
+      </div>`) : '';
+
+    return `
+      <div class="section-divider"><span class="sect-label sect-${tc}">${typeSectLabel(sec.type)}</span></div>
+      ${beforeItems}
+      <div class="schedule-items">${items}</div>
+      ${afterItems}`;
+  }).join('');
+
+  // song1 행
+  const isEditSong1=editingItemKey===`${curWeek}-song1`;
+  const song1HTML = isEditSong1?
+    `<div class="song-edit-form">
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div><div class="ef-lbl">시작 노래</div><input class="ef-inp" id="ef-song1" value="${esc(W.song1||'')}" placeholder="번호" inputmode="numeric" style="width:90px"></div>
+        <div><div class="ef-lbl">기도</div><input class="ef-inp" id="ef-prayerOpen" value="${esc(W.prayerOpen||'')}" placeholder="이름"></div>
+      </div>
+      <div class="ef-acts" style="margin-top:8px"><button class="ef-btn ef-cancel" onclick="cancelItemEdit()">취소</button><button class="ef-btn ef-save" onclick="saveSong1Edit(${curWeek})">저장</button></div>
+    </div>`:
+    `<div class="song-row song-row-editable" onclick="editingItemKey='${curWeek}-song1';renderWeekCard()">
+      <span class="song-icon">🎵</span>
+      <span class="song-lbl">시작노래</span><span class="song-text">${W.song1?'노래 '+esc(W.song1):'—'}</span>
+      <span class="prayer-text">기도: ${esc(W.prayerOpen||'—')}</span>
+      <button class="song-edit-inline-btn" onclick="editingItemKey='${curWeek}-song1';renderWeekCard();event.stopPropagation()">편집</button>
+    </div>`;
+
+  mc.innerHTML=`
+    <div class="print-title">경주 동부 회중 — 집회 임명표</div>
+    <div class="week-card">
+      <div class="week-header">
+        <div class="wh-left">
+          <div class="wh-week"><span class="wh-week-label">${esc(W.week)}</span></div>
+          <div class="wh-reading">📖 ${esc(W.reading||'')}</div>
+          ${W.chair?`<div class="wh-chair"><span class="wh-chair-lbl">사회 :</span> ${esc(W.chair)}</div>`:''}
+        </div>
+        <button class="wh-edit" onclick="openHeaderModal(${curWeek})">✏ 편집</button>
+      </div>
+      ${song1HTML}
+      ${sectionsHTML}
+    </div>
+    <div class="add-week-wrap"><button class="add-week-btn" onclick="addNewWeek()">＋ 새 주 추가</button></div>`;
+}
+
+function renderItemEditForm(wi,idx,item){
+  return `<div class="edit-form on" id="ef-${wi}-${idx}">
+    <div class="ef-grid">
+      <div class="ef-full"><div class="ef-lbl">제목</div><input class="ef-inp" id="ef-title-${wi}-${idx}" value="${esc(item.title||'')}"></div>
+      <div class="ef-full"><div class="ef-lbl">부제 (형식)</div><input class="ef-inp" id="ef-sub-${wi}-${idx}" value="${esc(item.sub||'')}"></div>
+      <div><div class="ef-lbl">담당자</div><input class="ef-inp" id="ef-who-${wi}-${idx}" value="${esc(item.who||'')}"></div>
+      <div><div class="ef-lbl">시간(분)</div><input class="ef-inp" id="ef-min-${wi}-${idx}" type="number" inputmode="numeric" min="1" max="60" value="${item.min||10}"></div>
+      <div class="ef-full"><div class="ef-lbl">구분</div>
+        <select class="ef-inp" id="ef-type-${wi}-${idx}">
+          <option value="jewel" ${item.type==='jewel'?'selected':''}>💎 성경에 담긴 보물</option>
+          <option value="service" ${item.type==='service'?'selected':''}>🌿 야외 봉사</option>
+          <option value="life" ${item.type==='life'?'selected':''}>🏠 그리스도인 생활</option>
+        </select>
+      </div>
+    </div>
+    <div class="ef-acts">
+      <button class="ef-btn ef-cancel" onclick="cancelItemEdit()">취소</button>
+      <button class="ef-btn ef-save" onclick="saveItemEdit(${wi},${idx})">저장</button>
+    </div>
+  </div>`;
+}
+
+// ── 편집 함수들 ──
+let _tapTimer=null;
+function onItemTap(wi,idx,e){
+  // 버튼 클릭은 무시
+  if(e.target.tagName==='BUTTON'||e.target.tagName==='SELECT') return;
+}
+function openItemEdit(wi,idx,e){
+  e.stopPropagation();
+  editingItemKey=`${wi}-${idx}`; renderWeekCard();
+  setTimeout(()=>{ const el=document.getElementById(`ef-title-${wi}-${idx}`); if(el) el.focus(); },80);
+}
+function cancelItemEdit(){ editingItemKey=null; renderWeekCard(); }
+function quickType(wi,idx,type,e){
+  e.stopPropagation();
+  D[wi].items[idx].type=type; saveLocal(); renderAll(); toast('✅ 섹션 변경됐어요');
+}
+function openClosingEdit(wi){ editingItemKey=`${wi}-closing`; renderWeekCard(); }
+function saveSong1Edit(wi){
+  D[wi].song1=document.getElementById('ef-song1').value.trim();
+  D[wi].prayerOpen=document.getElementById('ef-prayerOpen').value.trim();
+  editingItemKey=null; saveLocal(); renderAll(); toast('✅ 저장됐어요');
+}
+function saveSong2Edit(wi){
+  D[wi].song2=document.getElementById('ef-song2').value.trim();
+  editingItemKey=null; saveLocal(); renderAll(); toast('✅ 저장됐어요');
+}
+function saveClosingEdit(wi){
+  D[wi].song3=document.getElementById('ef-song3').value.trim();
+  D[wi].prayerClose=document.getElementById('ef-prayerClose').value.trim();
+  editingItemKey=null; saveLocal(); renderAll(); toast('✅ 저장됐어요');
+}
+function saveItemEdit(wi,idx){
+  D[wi].items[idx].title=document.getElementById(`ef-title-${wi}-${idx}`).value.trim();
+  D[wi].items[idx].sub=document.getElementById(`ef-sub-${wi}-${idx}`).value.trim();
+  D[wi].items[idx].who=document.getElementById(`ef-who-${wi}-${idx}`).value.trim();
+  D[wi].items[idx].min=parseInt(document.getElementById(`ef-min-${wi}-${idx}`).value)||10;
+  D[wi].items[idx].type=document.getElementById(`ef-type-${wi}-${idx}`).value;
+  editingItemKey=null; saveLocal(); renderAll(); toast('✅ 저장됐어요');
+}
+
+// ── 헤더 편집 모달 ──
+function openHeaderModal(wi){
+  editingHeaderIdx=wi; const W=D[wi];
+  document.getElementById('mStartDate').value=W.startDate||'';
+  document.getElementById('mWeek').value=W.week||'';
+  document.getElementById('mStartDate').onchange=function(){
+    if(this.value){ D[editingHeaderIdx].startDate=this.value; document.getElementById('mWeek').value=weekLabel(this.value); }
+  };
+  document.getElementById('mReading').value=W.reading||'';
+  document.getElementById('mChair').value=W.chair||'';
+  document.getElementById('mPrayerOpen').value=W.prayerOpen||'';
+  document.getElementById('mSong1').value=W.song1||'';
+  document.getElementById('mSong2').value=W.song2||'';
+  document.getElementById('mSong3').value=W.song3||'';
+  document.getElementById('mPrayerClose').value=W.prayerClose||'';
+  document.getElementById('headerModal').classList.add('on');
+}
+function closeHeaderModal(){ document.getElementById('headerModal').classList.remove('on'); }
+function saveHeaderModal(){
+  const wi=editingHeaderIdx;
+  D[wi].startDate=document.getElementById('mStartDate').value||D[wi].startDate||'';
+  D[wi].week=document.getElementById('mWeek').value.trim()||weekLabel(D[wi].startDate);
+  D[wi].reading=document.getElementById('mReading').value.trim();
+  D[wi].chair=document.getElementById('mChair').value.trim();
+  D[wi].prayerOpen=document.getElementById('mPrayerOpen').value.trim();
+  D[wi].song1=document.getElementById('mSong1').value.trim();
+  D[wi].song2=document.getElementById('mSong2').value.trim();
+  D[wi].song3=document.getElementById('mSong3').value.trim();
+  D[wi].prayerClose=document.getElementById('mPrayerClose').value.trim();
+  closeHeaderModal(); saveLocal(); renderAll(); toast('✅ 집회 정보 저장됐어요');
+}
+
+// 모달 배경/스와이프로 닫기
+document.getElementById('headerModal').addEventListener('click',function(e){ if(e.target===this) closeHeaderModal(); });
+(function(){
+  const sheet=document.getElementById('modalSheet'); let sy=0;
+  sheet.addEventListener('touchstart',e=>{ sy=e.touches[0].clientY; },{passive:true});
+  sheet.addEventListener('touchmove',e=>{ const dy=e.touches[0].clientY-sy; if(dy>0) sheet.style.transform=`translateY(${dy}px)`; },{passive:true});
+  sheet.addEventListener('touchend',e=>{ const dy=e.changedTouches[0].clientY-sy; sheet.style.transform=''; if(dy>80) closeHeaderModal(); },{passive:true});
+})();
+
+// ── 주 추가/삭제 ──
+function addNewWeek(){
+  const iso=nextWeekISO();
+  D.push({week:weekLabel(iso),startDate:iso,reading:'',chair:'',song1:'',prayerOpen:'',song2:'',song3:'',prayerClose:'',
+    items:[
+      {no:1,type:'jewel',title:'성경에 담긴 보물',sub:'',min:10,who:''},
+      {no:2,type:'jewel',title:'영적 보물 찾기',sub:'',min:10,who:''},
+      {no:3,type:'jewel',title:'성경 낭독',sub:'',min:4,who:''},
+      {no:4,type:'service',title:'대화 시작하기',sub:'호별 방문',min:3,who:''},
+      {no:5,type:'service',title:'대화 시작하기',sub:'비공식 증거',min:4,who:''},
+      {no:6,type:'service',title:'우리의 신앙 설명하기',sub:'연설',min:5,who:''},
+      {no:7,type:'life',title:'회중의 필요',sub:'',min:10,who:''},
+      {no:8,type:'life',title:'회중 성서 연구',sub:'',min:30,who:''},
+    ]});
+  curWeek=D.length-1; saveLocal(); renderAll();
+  setTimeout(()=>openHeaderModal(curWeek),100);
+}
+function deleteCurrentWeek(){
+  if(D.length<=1){ toast('⚠ 마지막 주는 삭제할 수 없어요'); return; }
+  if(!confirm(`"${D[curWeek].week}" 주를 삭제하시겠습니까?`)) return;
+  D.splice(curWeek,1); if(curWeek>=D.length) curWeek=D.length-1;
+  saveLocal(); renderAll(); toast('🗑 삭제됐어요');
+}
+
+// ── 인쇄 ──
+function doPrint(){
+  if(typeof window.print==='function') window.print();
+  else toast('⚠ 브라우저에서 인쇄해주세요');
+}
+
+// ── 토스트 ──
+let _tt;
+function toast(m){ const t=document.getElementById('toastEl'); t.textContent=m; t.classList.add('on'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('on'),2400); }
+
+// ── 지난 주 자동 삭제 ──
+function purgePastWeeks(){
+  const today=new Date().toISOString().slice(0,10);
+  const before=D.length;
+  D=D.filter(w=>{
+    if(!w.startDate) return true; // 날짜 없으면 유지
+    const e=new Date(w.startDate+'T00:00:00'); e.setDate(e.getDate()+6);
+    return e.toISOString().slice(0,10) >= today; // 이번 주 포함 이후만 유지
+  });
+  if(D.length===0) D=JSON.parse(JSON.stringify(DEFAULT_DATA)); // 전부 지워지면 기본값
+  const removed=before-D.length;
+  if(removed>0){ saveLocal(); console.log(`지난 주 ${removed}개 자동 삭제됨`); }
+}
+
+// ── 시작 ──
+if(!loadLocal()) D=JSON.parse(JSON.stringify(DEFAULT_DATA));
+backfillDates();
+purgePastWeeks();
+curWeek=findTodayWeek();
+renderAll();
+setSaveBadge(_lsOk?'no':'err', _lsOk?'💡 로드됨':'⚠ 저장불가—파일로저장');
+if(!_lsOk){ document.getElementById('fabSave').textContent='📁'; }
+
+// ══════════════════════════════════
+// PWA 설치 지원
+// ══════════════════════════════════
+(function initPWA(){
+  // ── SVG 아이콘 (192x192) ──
+  const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+    <rect width="192" height="192" rx="40" fill="#1a3a5c"/>
+    <rect x="20" y="20" width="152" height="152" rx="28" fill="#2a5080"/>
+    <text x="96" y="72" font-family="serif" font-size="44" font-weight="900" fill="#e8c060" text-anchor="middle">집회</text>
+    <text x="96" y="118" font-family="serif" font-size="32" font-weight="700" fill="#ffffff" text-anchor="middle">계획표</text>
+    <text x="96" y="154" font-family="sans-serif" font-size="20" fill="rgba(255,255,255,.55)" text-anchor="middle">경주 동부</text>
+  </svg>`;
+  const iconBlob = new Blob([iconSVG], {type:'image/svg+xml'});
+  const iconURL  = URL.createObjectURL(iconBlob);
+  document.getElementById('pwaIcon').href = './icon-192.svg';
+
+  // ── Manifest 파일 참조 ──
+  document.getElementById('pwaManifest').href = './manifest.json';
+
+  // ── Service Worker 등록 ──
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js', {scope:'./'})
+      .then(r=>console.log('SW 등록 완료', r.scope))
+      .catch(e=>console.log('SW 등록 실패:', e.message));
+  }
+
+  // ── 설치 배너 (beforeinstallprompt) ──
+  let _installPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _installPrompt = e;
+    showInstallBanner();
+  });
+  window.addEventListener('appinstalled', () => {
+    hideInstallBanner();
+    toast('✅ 앱이 설치됐어요!');
+  });
+
+  function showInstallBanner(){
+    let banner = document.getElementById('installBanner');
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'installBanner';
+      banner.style.cssText = `position:fixed;bottom:0;left:0;right:0;background:#1a3a5c;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 20px rgba(0,0,0,.3)`;
+      banner.innerHTML = `
+        <div style="font-size:32px">📲</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">앱으로 설치하기</div>
+          <div style="font-size:12px;opacity:.75;margin-top:2px">홈 화면에 추가하면 앱처럼 사용할 수 있어요</div>
+        </div>
+        <button onclick="doInstall()" style="background:#e8c060;color:#1a0a00;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;flex-shrink:0">설치</button>
+        <button onclick="hideInstallBanner()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0">나중에</button>`;
+      document.body.appendChild(banner);
+    }
+    banner.style.display = 'flex';
+  }
+  function hideInstallBanner(){
+    const b = document.getElementById('installBanner');
+    if(b) b.style.display = 'none';
+  }
+  window.doInstall = async function(){
+    if(!_installPrompt){ toast('브라우저 메뉴 → 홈 화면에 추가를 눌러주세요'); return; }
+    _installPrompt.prompt();
+    const { outcome } = await _installPrompt.userChoice;
+    if(outcome==='accepted') toast('✅ 설치가 시작됐어요!');
+    _installPrompt = null;
+    hideInstallBanner();
+  };
+  window.hideInstallBanner = hideInstallBanner;
+
+  // ── 수동 설치 안내 버튼 (항상 표시) ──
+  // FAB 옆에 설치 버튼 추가
+  const fab = document.getElementById('fabSave');
+  if(fab){
+    const installFab = document.createElement('button');
+    installFab.id = 'installFab';
+    installFab.style.cssText = `display:none;position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));right:16px;width:54px;height:54px;border-radius:50%;background:#e8c060;color:#1a0a00;font-size:22px;border:none;box-shadow:0 4px 18px rgba(0,0,0,.3);z-index:300;cursor:pointer;align-items:center;justify-content:center;font-family:inherit`;
+    installFab.textContent = '📲';
+    installFab.title = '앱 설치';
+    installFab.onclick = window.doInstall;
+    document.body.appendChild(installFab);
+    // 모바일에서만 표시
+    if(window.innerWidth <= 480) installFab.style.display = 'flex';
+    window.addEventListener('resize', ()=>{
+      installFab.style.display = window.innerWidth<=480?'flex':'none';
+    });
+  }
+})();
+</script>
+<script id="_sd" type="application/json"></script>
+</body>
+</html>
